@@ -51,6 +51,7 @@
 package_name="Fermentrack"
 github_repo="https://github.com/thorrak/fermentrack.git"
 github_branch="master"
+armbian=0
 green=$(tput setaf 76)
 red=$(tput setaf 1)
 tan=$(tput setaf 3)
@@ -193,6 +194,13 @@ verifyRunAsRoot() {
 
 }
 
+checkForArmbian() {
+  if [ -f /etc/armbian-release ]; then
+    source /etc/armbian-release
+    armbian=1
+  fi
+}
+
 
 # Check for network connection
 verifyInternetConnection() {
@@ -240,7 +248,29 @@ getAptPackages() {
     # Installing the nginx stack along with everything we need for circus, etc.
     printinfo "apt is updated - installing git-core, nginx, build-essential, python-dev, and python-virtualenv."
     printinfo "(This may take a few minutes during which everything will be silent) ..."
-    sudo apt-get install -y git-core build-essential python-dev python-virtualenv python-pip nginx libzmq-dev libevent-dev rabbitmq-server &>> install.log || die
+    if [ "$armbian" == "1" ]; then
+      sudo apt-get install -y \
+        git-core \
+	build-essential \
+	python-dev \
+	virtualenv \
+	python-pip \
+	nginx \
+	libzmq-dev \
+	libevent-dev \
+	rabbitmq-server &>> install.log || die
+    else
+      sudo apt-get install -y \
+        git-core \
+	build-essential \
+	python-dev \
+	python-virtualenv \
+	python-pip \
+	nginx \
+	libzmq-dev \
+	libevent-dev \
+	rabbitmq-server &>> install.log || die
+    fi
     printinfo "All packages installed successfully."
     echo
 }
@@ -501,7 +531,7 @@ printinfo "Configuring under user $fermentrackUser"
 printinfo "Configuring in directory $installPath"
 echo
 
-
+checkForArmbian
 verifyInternetConnection
 verifyInstallerVersion
 getAptPackages
